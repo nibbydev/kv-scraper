@@ -5,6 +5,7 @@ import { notifier } from '../server';
 export class BaseNotifyAction {
   lookup: ListingLookup;
   listing: Listing;
+  screenshot: Buffer;
 
   constructor(lookup: ListingLookup, listing: Listing) {
     this.lookup = lookup;
@@ -14,8 +15,6 @@ export class BaseNotifyAction {
   execute() {
     throw new Error('not implemented');
   }
-
-  sendMail() {}
 }
 
 export class NotifyNewAction extends BaseNotifyAction {
@@ -26,7 +25,8 @@ export class NotifyNewAction extends BaseNotifyAction {
       notifier.send(
         email,
         'Apartmnet crawler - New',
-        JSON.stringify(this.listing, undefined, 2)
+        JSON.stringify(this.listing, undefined, 2),
+        this.screenshot
       );
     }
   }
@@ -51,7 +51,8 @@ export class NotifyChangedAction extends BaseNotifyAction {
       notifier.send(
         email,
         'Apartmnet crawler - Changed',
-        JSON.stringify(this.listing, undefined, 2)
+        JSON.stringify(this.listing, undefined, 2),
+        this.screenshot
       );
     }
   }

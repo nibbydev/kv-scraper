@@ -14,12 +14,20 @@ export class Notifier {
     });
   }
 
-  send(to: string, title: string, body: string) {
-    var mailOptions = {
+  send(to: string, title: string, body: string, image: Buffer) {
+    const mailOptions = {
       from: config.signIn.username,
       to: to,
       subject: title,
       text: body,
+      html: `<img src="cid:unique"/>`,
+      attachments: [
+        {
+          filename: 'screenshot.png',
+          content: image,
+          cid: 'unique',
+        }
+      ]
     };
 
     this.transporter.sendMail(mailOptions, function (error, info) {
