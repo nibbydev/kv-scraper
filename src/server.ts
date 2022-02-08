@@ -2,9 +2,8 @@ import axios from 'axios';
 import cheerio from 'cheerio';
 import configJson from '../config/config.json';
 import { Listing, TmpData } from './model/cheerio.model';
-import { Config, ListingLookup } from './model/config.model';
+import { Config } from './model/config.model';
 import {
-  BaseNotifyAction,
   NotifyChangedAction,
   NotifyNewAction
 } from './stuff/actions';
@@ -32,11 +31,11 @@ function run(dry: boolean) {
       for (const listing of listings) {
         // if it is a new listing
         if (!dataCache[listing.id]) {
-          actions.push(new NotifyNewAction(lookup, listing))
+          actions.push(new NotifyNewAction(lookup, listing));
           dataCache[listing.id] = listing;
           continue;
         }
-        
+
         // find the fields that changed
         const changedFields = findChangedFields(dataCache[listing.id], listing);
         if (!changedFields.length) {
@@ -48,7 +47,6 @@ function run(dry: boolean) {
         dataCache[listing.id] = listing;
       }
 
-
       if (dry) {
         log(`Skipping execution in dry mode`);
       } else {
@@ -57,7 +55,7 @@ function run(dry: boolean) {
         for (const action of actions) {
           action.execute();
         }
-        
+
         log(`Finished executing actions`);
       }
     });

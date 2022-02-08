@@ -2,8 +2,8 @@ import * as _ from 'lodash';
 import { Listing } from './model/cheerio.model';
 import { config } from './server';
 
-export const extractListings = ($) =>
-  $('.object-type-apartment')
+export function extractListings($) {
+  return $('.object-type-apartment')
     .map((_, element) => {
       const $listing = $(element);
 
@@ -30,6 +30,7 @@ export const extractListings = ($) =>
     })
     .toArray()
     .filter((listing) => listing.title);
+}
 
 export const findChangedFields = (a: Listing, b: Listing) => {
   var keys = _.union(_.keys(a), _.keys(b));
