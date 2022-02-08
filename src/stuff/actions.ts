@@ -24,7 +24,7 @@ export class NotifyNewAction extends BaseNotifyAction {
     for (const email of this.lookup.notifyEmails) {
       notifier.send(
         email,
-        'Apartmnet crawler - New',
+        `KV scraper - New - ${this.listing.id}`,
         JSON.stringify(this.listing, undefined, 2),
         this.screenshot
       );
@@ -50,7 +50,7 @@ export class NotifyChangedAction extends BaseNotifyAction {
     for (const email of this.lookup.notifyEmails) {
       notifier.send(
         email,
-        'Apartmnet crawler - Changed',
+        `KV scraper - Changed - ${this.listing.id}`,
         JSON.stringify(this.listing, undefined, 2),
         this.screenshot
       );
