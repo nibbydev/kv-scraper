@@ -1,13 +1,9 @@
 import cheerio from 'cheerio';
 import playwright from 'playwright';
 import configJson from '../config/config.json';
+import { Action, ActionType } from './model/action.model';
 import { Listing, TmpData } from './model/cheerio.model';
-import { Config, ListingLookup } from './model/config.model';
-import {
-  BaseNotifyAction,
-  NotifyChangedAction,
-  NotifyNewAction
-} from './stuff/actions';
+import { Config } from './model/config.model';
 import { Notifier } from './stuff/notifier';
 import { extractListings, findChangedFields, log } from './utils';
 
@@ -39,55 +35,42 @@ async function run(dry: boolean) {
 
     log(`Found ${elementCount} listings`);
 
-    const actions = [];
+    const actions: Action[] = [];
     for (let i = 0; i < elementCount; i++) {
       const element = elements.nth(i);
       const listing = listings[i];
+
+      // some may be ads and not contain any info
       if (!listing.title) {
         continue;
       }
 
-      const action = createListingAction(lookup, listing);
+      const action = await createListingAction(listing, element);
       if (!action) {
         continue;
       }
 
-      if (!dry) {
-        log('Took screenshot');
-        action.screenshot = await element.screenshot();
-      }
-
+      dataCache[listing.id] = listing;
       actions.push(action);
     }
 
     await browser.close();
 
-    if (dry) {
-      log(`Skipping execution in dry mode`);
-      continue;
-    } else if (actions.length > 5) {
-      log(`TOO MANY ACTIONS. ABORTING`);
-      continue;
-    }
-
-    log(`Executing ${actions.length} actions`);
-
-    for (const action of actions) {
-      action.execute();
-    }
-
-    log(`Finished executing actions`);
+    executeActions(actions, dry);
   }
 }
 
-function createListingAction(
-  lookup: ListingLookup,
-  listing: Listing
-): BaseNotifyAction | undefined {
+async function createListingAction(
+  listing: Listing,
+  element: playwright.Locator
+): Promise<Action | undefined> {
   // if it is a new listing
   if (!dataCache[listing.id]) {
-    dataCache[listing.id] = listing;
-    return new NotifyNewAction(lookup, listing);
+    return {
+      type: ActionType.NOTIFY_NEW,
+      listing,
+      screenshot: await element.screenshot(),
+    };
   }
 
   // find the fields that changed
@@ -97,6 +80,56 @@ function createListingAction(
     return undefined;
   }
 
-  dataCache[listing.id] = listing;
-  return new NotifyChangedAction(lookup, listing, changedFields);
+  return {
+    type: ActionType.NOTIFY_CHANGED,
+    listing,
+    changedFields,
+    screenshot: await element.screenshot(),
+  };
+}
+
+function executeActions(actions: Action[], dry: boolean) {
+  if (dry) {
+    log(`Skipping execution in dry mode`);
+    return;
+  } else if (actions.length > 5) {
+    log(`TOO MANY ACTIONS. ABORTING`);
+    return;
+  }
+
+  log(`Executing ${actions.length} actions`);
+
+  for (const action of actions) {
+    executeAction(action);
+  }
+
+  log(`Finished executing actions`);
+}
+
+function executeAction(action: Action) {
+  if (action.type === ActionType.NOTIFY_CHANGED) {
+    console.log('executing notify changed');
+
+    for (const email of this.lookup.notifyEmails) {
+      notifier.send(
+        email,
+        `KV scraper - Changed - ${this.listing.id}`,
+        JSON.stringify(this.listing, undefined, 2),
+        this.screenshot
+      );
+    }
+  }
+
+  if (action.type === ActionType.NOTIFY_NEW) {
+    console.log('executing notify new');
+
+    for (const email of this.lookup.notifyEmails) {
+      notifier.send(
+        email,
+        `KV scraper - New - ${this.listing.id}`,
+        JSON.stringify(this.listing, undefined, 2),
+        this.screenshot
+      );
+    }
+  }
 }
