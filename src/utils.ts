@@ -1,6 +1,5 @@
 import * as _ from 'lodash';
 import { Listing } from './model/cheerio.model';
-import { config } from './server';
 
 export function extractListing($listing) {
   console.log($listing);
@@ -55,7 +54,7 @@ export function extractListings($) {
       };
       return listing;
     })
-    .toArray()
+    .toArray();
 }
 
 export const findChangedFields = (a: Listing, b: Listing) => {
@@ -64,9 +63,7 @@ export const findChangedFields = (a: Listing, b: Listing) => {
     return a[key] !== b[key];
   });
 
-  return changedFields.filter(
-    (field) => !config.skipUpdateFields.includes(field)
-  );
+  return changedFields.filter((field) => !['age'].includes(field));
 };
 
 export const log = (msg: string) => {

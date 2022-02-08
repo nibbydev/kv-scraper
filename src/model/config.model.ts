@@ -1,6 +1,5 @@
 export interface Config {
   lookups: ListingLookup[];
-  skipUpdateFields: string[];
   signIn: SignInInfo;
   frequency: number;
 }

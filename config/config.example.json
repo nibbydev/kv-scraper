@@ -7,7 +7,6 @@
     }
   ],
   "frequency": 10,
-  "skipUpdateFields": ["age"],
   "signIn": {
     "service": "gmail",
     "username": "my.email@gmail.com",
