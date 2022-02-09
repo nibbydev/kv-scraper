@@ -6,7 +6,10 @@
       "notifyEmails": ["my.email@gmail.com"]
     }
   ],
-  "frequency": 10,
+  "frequency": {
+    "min": 5,
+    "max": 20
+  },
   "signIn": {
     "service": "gmail",
     "username": "my.email@gmail.com",
