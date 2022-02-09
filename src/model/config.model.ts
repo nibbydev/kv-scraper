@@ -5,6 +5,11 @@ export interface Config {
     min: number;
     max: number;
   };
+  inactiveHours: {
+    enabled: boolean;
+    from: string;
+    to: string;
+  }; 
 }
 
 export interface ListingLookup {

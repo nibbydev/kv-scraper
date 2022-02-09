@@ -82,6 +82,18 @@ export const getRandomFrequencyMS = () => {
   return Math.floor(Math.random() * (max - min + 1) + min);
 };
 
+export const skipRun = () => {
+  if (!config.inactiveHours.enabled) {
+    return false;
+  }
+
+  const currentHour = new Date().getUTCHours();
+  // Running eg "14:00" or "14:34" through parseInt will return 14
+  const from = parseInt(config.inactiveHours.from);
+  const to = parseInt(config.inactiveHours.to);
+  return currentHour >= from && currentHour < to;
+};
+
 export const readCacheFile = (): Cache => {
   const jsonString = fs.existsSync(CACHE_FILE)
     ? fs.readFileSync(CACHE_FILE)

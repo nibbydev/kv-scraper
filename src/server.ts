@@ -11,6 +11,7 @@ import {
   getRandomFrequencyMS,
   log,
   readCacheFile,
+  skipRun,
   writeCacheFile
 } from './utils';
 
@@ -21,6 +22,11 @@ run(true);
 loop();
 
 function loop() {
+  if (skipRun()) {
+    setTimeout(() => loop(), 10 * 60 * 1000);
+    return;
+  }
+
   const delayMS = getRandomFrequencyMS();
   const delayMin = Math.floor(delayMS / 1000 / 60);
   log(`Next delay: ${delayMin} min`);

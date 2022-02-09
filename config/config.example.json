@@ -10,6 +10,11 @@
     "min": 5,
     "max": 20
   },
+  "inactiveHours": {
+    "enabled": true,
+    "from": "00:00",
+    "to": "07:00"
+  },
   "signIn": {
     "service": "gmail",
     "username": "my.email@gmail.com",
