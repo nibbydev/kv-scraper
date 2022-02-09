@@ -1,4 +1,5 @@
 import cheerio from 'cheerio';
+import { isEqual } from 'lodash';
 import playwright from 'playwright';
 import configJson from '../config/config.json';
 import { Action, ActionType } from './model/action.model';
@@ -18,7 +19,7 @@ import {
 export const config: Config = configJson as Config;
 export const notifier = new Notifier();
 
-run(true);
+run();
 loop();
 
 function loop() {
@@ -32,16 +33,17 @@ function loop() {
   log(`Next delay: ${delayMin} min`);
 
   setTimeout(() => {
-    run(false);
+    run();
     loop();
   }, delayMS);
 }
 
-async function run(dry: boolean) {
+async function run() {
   log('Starting');
 
   // load in cache file
   const cache = readCacheFile();
+  const isCacheEmpty = isEqual(cache, {});
 
   for (const lookup of config.lookups) {
     log(`Scraping: ${lookup.description}`);
@@ -82,7 +84,10 @@ async function run(dry: boolean) {
 
     await browser.close();
 
-    executeActions(actions, dry);
+    // only execute if cache exists. otherwise it'll send out an email for all 57 listings it finds
+    if (!isCacheEmpty) {
+      executeActions(actions);
+    }
   }
 
   writeCacheFile(cache);
@@ -120,11 +125,8 @@ async function createListingAction(
   };
 }
 
-function executeActions(actions: Action[], dry: boolean) {
-  if (dry) {
-    log(`Skipping execution in dry mode`);
-    return;
-  } else if (actions.length > 5) {
+function executeActions(actions: Action[]) {
+  if (actions.length > 5) {
     log(`TOO MANY ACTIONS. ABORTING`);
     return;
   }
