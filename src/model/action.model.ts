@@ -5,6 +5,7 @@ export interface Action {
   listing: Listing;
   screenshot?: Buffer;
   changedFields?: string[];
+  notifyEmails: string[];
 }
 
 export enum ActionType {

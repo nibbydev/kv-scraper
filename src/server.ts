@@ -3,7 +3,7 @@ import playwright from 'playwright';
 import configJson from '../config/config.json';
 import { Action, ActionType } from './model/action.model';
 import { Listing, TmpData } from './model/cheerio.model';
-import { Config } from './model/config.model';
+import { Config, ListingLookup } from './model/config.model';
 import { Notifier } from './stuff/notifier';
 import {
   extractListings,
@@ -61,7 +61,7 @@ async function run(dry: boolean) {
         continue;
       }
 
-      const action = await createListingAction(listing, element);
+      const action = await createListingAction(lookup, listing, element);
       if (!action) {
         continue;
       }
@@ -77,6 +77,7 @@ async function run(dry: boolean) {
 }
 
 async function createListingAction(
+  lookup: ListingLookup,
   listing: Listing,
   element: playwright.Locator
 ): Promise<Action | undefined> {
@@ -86,6 +87,7 @@ async function createListingAction(
       type: ActionType.NOTIFY_NEW,
       listing,
       screenshot: await element.screenshot(),
+      notifyEmails: lookup.notifyEmails,
     };
   }
 
@@ -101,6 +103,7 @@ async function createListingAction(
     listing,
     changedFields,
     screenshot: await element.screenshot(),
+    notifyEmails: lookup.notifyEmails,
   };
 }
 
@@ -126,12 +129,12 @@ function executeAction(action: Action) {
   if (action.type === ActionType.NOTIFY_CHANGED) {
     console.log('executing notify changed');
 
-    for (const email of this.lookup.notifyEmails) {
+    for (const email of action.notifyEmails) {
       notifier.send(
         email,
-        `KV scraper - Changed - ${this.listing.id}`,
-        JSON.stringify(this.listing, undefined, 2),
-        this.screenshot
+        `KV scraper - Changed - ${action.listing.id}`,
+        JSON.stringify(action.listing, undefined, 2),
+        action.screenshot
       );
     }
   }
@@ -139,12 +142,12 @@ function executeAction(action: Action) {
   if (action.type === ActionType.NOTIFY_NEW) {
     console.log('executing notify new');
 
-    for (const email of this.lookup.notifyEmails) {
+    for (const email of action.notifyEmails) {
       notifier.send(
         email,
-        `KV scraper - New - ${this.listing.id}`,
-        JSON.stringify(this.listing, undefined, 2),
-        this.screenshot
+        `KV scraper - New - ${action.listing.id}`,
+        JSON.stringify(action.listing, undefined, 2),
+        action.screenshot
       );
     }
   }
