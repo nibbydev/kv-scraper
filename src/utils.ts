@@ -1,6 +1,10 @@
+import fs from 'fs';
 import * as _ from 'lodash';
-import { Listing } from './model/cheerio.model';
+import path from 'path';
+import { Cache, Listing } from './model/cheerio.model';
 import { config } from './server';
+
+const CACHE_FILE = path.join(__dirname, '../config/cache.json');
 
 export function extractListing($listing) {
   console.log($listing);
@@ -76,4 +80,15 @@ export const getRandomFrequencyMS = () => {
   const min = config.frequency.min * 1000 * 60;
   const max = config.frequency.max * 1000 * 60;
   return Math.floor(Math.random() * (max - min + 1) + min);
+};
+
+export const readCacheFile = (): Cache => {
+  const jsonString = fs.existsSync(CACHE_FILE)
+    ? fs.readFileSync(CACHE_FILE)
+    : undefined;
+  return jsonString ? JSON.parse(jsonString?.toString()) : {};
+};
+
+export const writeCacheFile = (cache: Cache) => {
+  fs.writeFileSync(CACHE_FILE, JSON.stringify(cache, undefined, 2));
 };

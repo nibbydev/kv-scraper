@@ -11,6 +11,6 @@ export interface Listing {
   isBooked: boolean;
 }
 
-export interface TmpData {
+export interface Cache {
   [listingId: number]: Listing;
 }

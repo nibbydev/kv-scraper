@@ -2,19 +2,20 @@ import cheerio from 'cheerio';
 import playwright from 'playwright';
 import configJson from '../config/config.json';
 import { Action, ActionType } from './model/action.model';
-import { Listing, TmpData } from './model/cheerio.model';
+import { Cache, Listing } from './model/cheerio.model';
 import { Config, ListingLookup } from './model/config.model';
 import { Notifier } from './stuff/notifier';
 import {
   extractListings,
   findChangedFields,
   getRandomFrequencyMS,
-  log
+  log,
+  readCacheFile,
+  writeCacheFile
 } from './utils';
 
 export const config: Config = configJson as Config;
 export const notifier = new Notifier();
-export const dataCache: TmpData = {};
 
 run(true);
 loop();
@@ -32,6 +33,9 @@ function loop() {
 
 async function run(dry: boolean) {
   log('Starting');
+
+  // load in cache file
+  const cache = readCacheFile();
 
   for (const lookup of config.lookups) {
     log(`Scraping: ${lookup.description}`);
@@ -61,12 +65,12 @@ async function run(dry: boolean) {
         continue;
       }
 
-      const action = await createListingAction(lookup, listing, element);
+      const action = await createListingAction(cache, lookup, listing, element);
       if (!action) {
         continue;
       }
 
-      dataCache[listing.id] = listing;
+      cache[listing.id] = listing;
       actions.push(action);
     }
 
@@ -74,15 +78,18 @@ async function run(dry: boolean) {
 
     executeActions(actions, dry);
   }
+
+  writeCacheFile(cache);
 }
 
 async function createListingAction(
+  cache: Cache,
   lookup: ListingLookup,
   listing: Listing,
   element: playwright.Locator
 ): Promise<Action | undefined> {
   // if it is a new listing
-  if (!dataCache[listing.id]) {
+  if (!cache[listing.id]) {
     return {
       type: ActionType.NOTIFY_NEW,
       listing,
@@ -92,7 +99,7 @@ async function createListingAction(
   }
 
   // find the fields that changed
-  const changedFields = findChangedFields(dataCache[listing.id], listing);
+  const changedFields = findChangedFields(cache[listing.id], listing);
   // something unimportant changed
   if (!changedFields.length) {
     return undefined;
@@ -124,4 +131,3 @@ function executeActions(actions: Action[], dry: boolean) {
 
   log(`Finished executing actions`);
 }
-
