@@ -89,7 +89,7 @@ async function createListingAction(
   element: playwright.Locator
 ): Promise<Action | undefined> {
   // if it is a new listing
-  if (!cache[listing.id]) {
+  if (!cache[listing.id] && listing.age) {
     return {
       type: ActionType.NOTIFY_NEW,
       listing,
