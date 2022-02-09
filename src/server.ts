@@ -129,6 +129,9 @@ function executeActions(actions: Action[]) {
   if (actions.length > 5) {
     log(`TOO MANY ACTIONS. ABORTING`);
     return;
+  } else if (!actions.length) {
+    log(`No actions to execute`);
+    return;
   }
 
   log(`Executing ${actions.length} actions`);
