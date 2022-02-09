@@ -119,36 +119,9 @@ function executeActions(actions: Action[], dry: boolean) {
   log(`Executing ${actions.length} actions`);
 
   for (const action of actions) {
-    executeAction(action);
+    notifier.send(action);
   }
 
   log(`Finished executing actions`);
 }
 
-function executeAction(action: Action) {
-  if (action.type === ActionType.NOTIFY_CHANGED) {
-    console.log('executing notify changed');
-
-    for (const email of action.notifyEmails) {
-      notifier.send(
-        email,
-        `KV scraper - Changed - ${action.listing.id}`,
-        JSON.stringify(action.listing, undefined, 2),
-        action.screenshot
-      );
-    }
-  }
-
-  if (action.type === ActionType.NOTIFY_NEW) {
-    console.log('executing notify new');
-
-    for (const email of action.notifyEmails) {
-      notifier.send(
-        email,
-        `KV scraper - New - ${action.listing.id}`,
-        JSON.stringify(action.listing, undefined, 2),
-        action.screenshot
-      );
-    }
-  }
-}

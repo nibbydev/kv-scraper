@@ -1,8 +1,9 @@
 import nodemailer from 'nodemailer';
+import { Action, ActionType } from '../model/action.model';
 import { config } from '../server';
 
 export class Notifier {
-  transporter: any;
+  transporter;
 
   constructor() {
     this.transporter = nodemailer.createTransport({
@@ -14,20 +15,24 @@ export class Notifier {
     });
   }
 
-  send(to: string, title: string, body: string, image: Buffer) {
+  send(action: Action) {
+    const subject =
+      action.type === ActionType.NOTIFY_CHANGED
+        ? `KV scraper - Changed - ${action.listing.id}`
+        : `KV scraper - New - ${action.listing.id}`;
+
     const mailOptions = {
       from: config.signIn.username,
-      to: to,
-      subject: title,
-      text: body,
-      html: `<img src="cid:unique"/>`,
+      to: action.notifyEmails,
+      subject: subject,
+      html: this.buildHtml(action),
       attachments: [
         {
           filename: 'screenshot.png',
-          content: image,
+          content: action.screenshot,
           cid: 'unique',
-        }
-      ]
+        },
+      ],
     };
 
     this.transporter.sendMail(mailOptions, function (error, info) {
@@ -37,5 +42,18 @@ export class Notifier {
         console.log('Email sent: ' + info.response);
       }
     });
+  }
+
+  buildHtml(action: Action) {
+    let changedFieldsHtml = '';
+    if (action.changedFields) {
+      changedFieldsHtml += '<pre>' + action.changedFields.join(', ') + '</pre>';
+    }
+
+    return `<a href="${action.listing.href}" target="_blank">
+      <img src="cid:unique"/> 
+      <br><br>
+      ${changedFieldsHtml}
+    </a>`;
   }
 }
