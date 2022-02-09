@@ -87,7 +87,7 @@ export const skipRun = () => {
     return false;
   }
 
-  const currentHour = new Date().getUTCHours();
+  const currentHour = new Date().getUTCHours() + config.inactiveHours.timezone;
   // Running eg "14:00" or "14:34" through parseInt will return 14
   const from = parseInt(config.inactiveHours.from);
   const to = parseInt(config.inactiveHours.to);
