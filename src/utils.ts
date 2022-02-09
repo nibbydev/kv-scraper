@@ -1,5 +1,6 @@
 import * as _ from 'lodash';
 import { Listing } from './model/cheerio.model';
+import { config } from './server';
 
 export function extractListing($listing) {
   console.log($listing);
@@ -69,4 +70,10 @@ export const findChangedFields = (a: Listing, b: Listing) => {
 export const log = (msg: string) => {
   const timestamp = new Date().toJSON().substring(11, 19);
   console.log(`[${timestamp}]`, msg);
+};
+
+export const getRandomFrequencyMS = () => {
+  const min = config.frequency.min * 1000 * 60;
+  const max = config.frequency.max * 1000 * 60;
+  return Math.floor(Math.random() * (max - min + 1) + min);
 };

@@ -5,14 +5,30 @@ import { Action, ActionType } from './model/action.model';
 import { Listing, TmpData } from './model/cheerio.model';
 import { Config } from './model/config.model';
 import { Notifier } from './stuff/notifier';
-import { extractListings, findChangedFields, log } from './utils';
+import {
+  extractListings,
+  findChangedFields,
+  getRandomFrequencyMS,
+  log
+} from './utils';
 
 export const config: Config = configJson as Config;
 export const notifier = new Notifier();
 export const dataCache: TmpData = {};
 
 run(true);
-setInterval(() => run(false), config.frequency * 1000 * 60);
+loop();
+
+function loop() {
+  const delayMS = getRandomFrequencyMS();
+  const delayMin = Math.floor(delayMS / 1000 / 60);
+  log(`Next delay: ${delayMin} min`);
+
+  setTimeout(() => {
+    run(false);
+    loop();
+  }, delayMS);
+}
 
 async function run(dry: boolean) {
   log('Starting');

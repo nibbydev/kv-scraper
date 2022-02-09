@@ -1,7 +1,10 @@
 export interface Config {
   lookups: ListingLookup[];
   signIn: SignInInfo;
-  frequency: number;
+  frequency: {
+    min: number;
+    max: number;
+  };
 }
 
 export interface ListingLookup {
