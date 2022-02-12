@@ -73,8 +73,11 @@ export const findChangedFields = (a: Listing, b: Listing) => {
 };
 
 export const log = (msg: string) => {
-  const timestamp = new Date().toJSON().substring(11, 19);
-  console.log(`[${timestamp}]`, msg);
+  const now = new Date();
+  const h = ('0' + now.getHours()).substr(-2);
+  const m = ('0' + now.getMinutes()).substr(-2);
+  const s = ('0' + now.getSeconds()).substr(-2);
+  console.log(`[${h}:${m}:${s}]`, msg);
 };
 
 export const getRandomFrequencyMS = () => {
@@ -88,7 +91,7 @@ export const skipRun = () => {
     return false;
   }
 
-  const currentHour = new Date().getUTCHours() + config.inactiveHours.timezone;
+  const currentHour = new Date().getHours();
   // Running eg "14:00" or "14:34" through parseInt will return 14
   const from = parseInt(config.inactiveHours.from);
   const to = parseInt(config.inactiveHours.to);
