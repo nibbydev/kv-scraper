@@ -2,13 +2,12 @@ import cheerio from 'cheerio';
 import { isEqual } from 'lodash';
 import playwright from 'playwright';
 import configJson from '../config/config.json';
-import { Action, ActionType } from './model/action.model';
-import { Cache, Listing } from './model/cheerio.model';
-import { Config, ListingLookup } from './model/config.model';
+import { Action } from './model/action.model';
+import { Listing } from './model/cheerio.model';
+import { Config } from './model/config.model';
 import { Notifier } from './stuff/notifier';
 import {
-  extractListings,
-  findChangedFields,
+  extractListings, getActionType,
   getRandomFrequencyMS,
   log,
   readCacheFile,
@@ -48,17 +47,12 @@ async function run() {
   for (const lookup of config.lookups) {
     log(`Scraping: ${lookup.description}`);
 
-    const browser = await playwright.chromium.launch();
-    const context = await browser.newContext();
-    const page = await context.newPage();
-
-    await page.goto(lookup.url);
-    await page.click('button#onetrust-accept-btn-handler');
-
+    const { browser, page } = await loadPage(lookup.url);
     const elements = page.locator('.object-type-apartment');
     const elementCount = await elements.count();
+    const pageHtml = await page.content();
 
-    const $ = cheerio.load(await page.content());
+    const $ = cheerio.load(pageHtml);
     const listings: Listing[] = extractListings($);
 
     log(`Found ${elementCount} listings`);
@@ -66,19 +60,28 @@ async function run() {
     const actions: Action[] = [];
     for (let i = 0; i < elementCount; i++) {
       const element = elements.nth(i);
-      const listing = listings[i];
+      const newListing = listings[i];
+      const oldListing = cache[newListing.id];
 
       // some may be ads and not contain any info
-      if (!listing.title) {
+      if (!newListing?.title || !newListing?.id) {
         continue;
       }
 
-      const action = await createListingAction(cache, lookup, listing, element);
-      if (!action) {
+      const actionType = getActionType(newListing, oldListing);
+      if (!actionType) {
         continue;
       }
 
-      cache[listing.id] = listing;
+      const action: Action = {
+        type: actionType,
+        newListing,
+        oldListing,
+        screenshot: await element.screenshot(),
+        notifyEmails: lookup.notifyEmails,
+      };
+
+      cache[newListing.id] = newListing;
       actions.push(action);
     }
 
@@ -93,35 +96,17 @@ async function run() {
   writeCacheFile(cache);
 }
 
-async function createListingAction(
-  cache: Cache,
-  lookup: ListingLookup,
-  listing: Listing,
-  element: playwright.Locator
-): Promise<Action | undefined> {
-  // if it is a new listing
-  if (!cache[listing.id] && listing.age) {
-    return {
-      type: ActionType.NOTIFY_NEW,
-      listing,
-      screenshot: await element.screenshot(),
-      notifyEmails: lookup.notifyEmails,
-    };
-  }
+async function loadPage(url: string) {
+  const browser = await playwright.chromium.launch();
+  const context = await browser.newContext();
+  const page = await context.newPage();
 
-  // find the fields that changed
-  const changedFields = findChangedFields(cache[listing.id], listing);
-  // something unimportant changed
-  if (!changedFields.length) {
-    return undefined;
-  }
+  await page.goto(url);
+  await page.click('button#onetrust-accept-btn-handler');
 
   return {
-    type: ActionType.NOTIFY_CHANGED,
-    listing,
-    changedFields,
-    screenshot: await element.screenshot(),
-    notifyEmails: lookup.notifyEmails,
+    browser,
+    page,
   };
 }
 

@@ -1,6 +1,7 @@
 import nodemailer from 'nodemailer';
 import { Action, ActionType } from '../model/action.model';
 import { config } from '../server';
+import { findChangedFields } from '../utils';
 
 export class Notifier {
   transporter;
@@ -18,8 +19,8 @@ export class Notifier {
   send(action: Action) {
     const subject =
       action.type === ActionType.NOTIFY_CHANGED
-        ? `KV scraper - Changed - ${action.listing.id}`
-        : `KV scraper - New - ${action.listing.id}`;
+        ? `KV scraper - Changed - ${action.newListing.id}`
+        : `KV scraper - New - ${action.newListing.id}`;
 
     const mailOptions = {
       from: config.signIn.username,
@@ -46,14 +47,21 @@ export class Notifier {
 
   buildHtml(action: Action) {
     let changedFieldsHtml = '';
-    if (action.changedFields) {
-      changedFieldsHtml += '<pre>' + action.changedFields.join(', ') + '</pre>';
+
+    if (action.type === ActionType.NOTIFY_CHANGED) {
+      const changedFields = findChangedFields(
+        action.newListing,
+        action.oldListing
+      );
+      changedFieldsHtml += '<h2>Changed fields:</h2>';
+      changedFieldsHtml += '<pre>' + changedFields.join(', ') + '</pre>';
     }
 
-    return `<a href="${action.listing.href}" target="_blank">
-      <img src="cid:unique"/> 
-      <br><br>
-      ${changedFieldsHtml}
-    </a>`;
+    return `
+      <a href="${action.newListing.href}" target="_blank">
+        <img src="cid:unique"/> 
+        <br><br>
+      </a>
+      ${changedFieldsHtml}`.trim();
   }
 }

@@ -2,9 +2,9 @@ import { Listing } from './cheerio.model';
 
 export interface Action {
   type: ActionType;
-  listing: Listing;
-  screenshot?: Buffer;
-  changedFields?: string[];
+  oldListing: Listing;
+  newListing: Listing;
+  screenshot: Buffer;
   notifyEmails: string[];
 }
 

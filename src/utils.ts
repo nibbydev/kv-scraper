@@ -1,6 +1,7 @@
 import fs from 'fs';
 import * as _ from 'lodash';
 import path from 'path';
+import { ActionType } from './model/action.model';
 import { Cache, Listing } from './model/cheerio.model';
 import { config } from './server';
 
@@ -103,4 +104,15 @@ export const readCacheFile = (): Cache => {
 
 export const writeCacheFile = (cache: Cache) => {
   fs.writeFileSync(CACHE_FILE, JSON.stringify(cache, undefined, 2));
+};
+
+export const getActionType = (listing: Listing, existingListing: Listing) => {
+  // if it is a new listing
+  if (!existingListing) {
+    return ActionType.NOTIFY_NEW;
+  }
+
+  // find the fields that changed
+  const changedFields = findChangedFields(existingListing, listing);
+  return changedFields.length ? ActionType.NOTIFY_CHANGED : undefined;
 };
