@@ -7,7 +7,6 @@ export interface Config {
   };
   inactiveHours: {
     enabled: boolean;
-    timezone: number;
     from: string;
     to: string;
   }; 
