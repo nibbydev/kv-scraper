@@ -20,8 +20,8 @@ export class Notifier {
   send(lookup: ListingLookup, action: Action) {
     const subject =
       action.type === ActionType.NOTIFY_CHANGED
-        ? `Scraper - Changed - ${action.listingId}`
-        : `Scraper - New - ${action.listingId}`;
+        ? `${lookup.description} - Changed - ${action.listingId}`
+        : `${lookup.description} - New - ${action.listingId}`;
 
     const mailOptions: Mail.Options = {
       from: config.signIn.username,
