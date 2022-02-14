@@ -1,10 +1,19 @@
 import cheerio from 'cheerio';
-import { Action, ActionType } from '../model/action.model';
-import { Cache, OkidokiListing } from '../model/cheerio.model';
-import { findChangedFields, getChanges } from '../utils';
+import { OkidokiListing } from '../model/cheerio.model';
+import { ListingLookup } from '../model/config.model';
 import { Parser } from './parser';
 
 export class OkidokiParser extends Parser {
+  constructor(lookup: ListingLookup) {
+    super(lookup);
+    this.elementLocator = 'li.classifieds__item';
+    this.cacheSelector = 'okidoki';
+    this.excludeFields = ['age'];
+    this.listingCheckFn = (listing) => {
+      return Boolean(listing?.id);
+    };
+  }
+
   async afterLoad() {
     // hide cookie popup
     await this.page.click('#cookiepolicy .button');
@@ -12,45 +21,6 @@ export class OkidokiParser extends Parser {
     await new Promise((resolve) =>
       setTimeout(resolve, this.lookup.waitAfterPageLoad)
     );
-  }
-
-  async parse(cache: Cache, listings: OkidokiListing[]) {
-    const elements = this.page.locator('li.classifieds__item');
-    const elementCount = await elements.count();
-
-    const actions: Action[] = [];
-    for (let i = 0; i < elementCount; i++) {
-      const element = elements.nth(i);
-      const newListing = listings[i];
-      const oldListing = cache.okidoki[newListing.id];
-
-      // find the fields that changed
-      const changedFields = findChangedFields(oldListing, newListing).filter(
-        (field) => !['age'].includes(field)
-      );
-
-      const actionType = !oldListing
-        ? ActionType.NOTIFY_NEW
-        : changedFields.length
-        ? ActionType.NOTIFY_CHANGED
-        : undefined;
-      if (!actionType) {
-        continue;
-      }
-
-      const action: Action = {
-        listingId: newListing.id,
-        type: actionType,
-        changed: getChanges(changedFields, oldListing, newListing),
-        screenshot: await element.screenshot(),
-        href: newListing.href,
-      };
-
-      cache.okidoki[newListing.id] = newListing;
-      actions.push(action);
-    }
-
-    return actions;
   }
 
   extractListings(pageHtml: string) {

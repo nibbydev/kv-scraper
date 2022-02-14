@@ -1,13 +1,19 @@
 import playwright from 'playwright';
-import { Action } from '../model/action.model';
+import { Action, ActionType } from '../model/action.model';
 import { Cache, KvListing, OkidokiListing } from '../model/cheerio.model';
 import { ListingLookup } from '../model/config.model';
-import { log } from '../utils';
+import { findChangedFields, getChanges, log } from '../utils';
 
 export class Parser {
   lookup: ListingLookup;
   browser: playwright.Browser;
   page: playwright.Page;
+
+  // these are populated inside classes that inherit this class
+  elementLocator: string;
+  cacheSelector: string;
+  excludeFields: string[];
+  listingCheckFn: (listing: KvListing | OkidokiListing) => boolean;
 
   constructor(lookup: ListingLookup) {
     this.lookup = lookup;
@@ -39,7 +45,7 @@ export class Parser {
     return actions;
   }
 
-  async loadPage() {
+  private async loadPage() {
     this.browser = await playwright.chromium.launch();
     const context = await this.browser.newContext();
     this.page = await context.newPage();
@@ -55,10 +61,54 @@ export class Parser {
     throw new Error('Not implemented');
   }
 
-  async parse(
+  private async parse(
     cache: Cache,
     listings: KvListing[] | OkidokiListing[]
   ): Promise<Action[]> {
-    throw new Error('Not implemented');
+    // these should be populated inside the classes that inherit this class
+    if (!this.elementLocator || !this.cacheSelector || !this.excludeFields) {
+      throw new Error('Not implemented correctly');
+    }
+
+    const elements = this.page.locator(this.elementLocator);
+    const elementCount = await elements.count();
+
+    const actions: Action[] = [];
+    for (let i = 0; i < elementCount; i++) {
+      const element = elements.nth(i);
+      const newListing = listings[i];
+      const oldListing = cache[this.cacheSelector][newListing.id];
+
+      // some may be ads and not contain any info
+      const isListingValid = this.listingCheckFn(newListing);
+      if (!isListingValid) continue;
+
+      // find the fields that changed
+      const changedFields = findChangedFields(oldListing, newListing).filter(
+        (field) => !this.excludeFields.includes(field)
+      );
+
+      const actionType = !oldListing
+        ? ActionType.NOTIFY_NEW
+        : changedFields.length
+        ? ActionType.NOTIFY_CHANGED
+        : undefined;
+      if (!actionType) {
+        continue;
+      }
+
+      const action: Action = {
+        listingId: newListing.id,
+        type: actionType,
+        changed: getChanges(changedFields, oldListing, newListing),
+        screenshot: await element.screenshot(),
+        href: newListing.href,
+      };
+
+      cache[this.cacheSelector][newListing.id] = newListing;
+      actions.push(action);
+    }
+
+    return actions;
   }
 }

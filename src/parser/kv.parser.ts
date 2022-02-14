@@ -1,10 +1,19 @@
 import cheerio from 'cheerio';
-import { Action, ActionType } from '../model/action.model';
-import { Cache, KvListing } from '../model/cheerio.model';
-import { findChangedFields, getChanges } from '../utils';
+import { KvListing } from '../model/cheerio.model';
+import { ListingLookup } from '../model/config.model';
 import { Parser } from './parser';
 
 export class KvParser extends Parser {
+  constructor(lookup: ListingLookup) {
+    super(lookup);
+    this.elementLocator = '.object-type-apartment';
+    this.cacheSelector = 'kv';
+    this.excludeFields = ['age'];
+    this.listingCheckFn = (listing) => {
+      return Boolean(listing?.title) && Boolean(listing?.id);
+    };
+  }
+
   async afterLoad() {
     // hide cookie popup
     await this.page.click('button#onetrust-accept-btn-handler');
@@ -12,50 +21,6 @@ export class KvParser extends Parser {
     await new Promise((resolve) =>
       setTimeout(resolve, this.lookup.waitAfterPageLoad)
     );
-  }
-
-  async parse(cache: Cache, listings: KvListing[]) {
-    const elements = this.page.locator('.object-type-apartment');
-    const elementCount = await elements.count();
-
-    const actions: Action[] = [];
-    for (let i = 0; i < elementCount; i++) {
-      const element = elements.nth(i);
-      const newListing = listings[i];
-      const oldListing = cache.kv[newListing.id];
-
-      // some may be ads and not contain any info
-      if (!newListing?.title || !newListing?.id) {
-        continue;
-      }
-
-      // find the fields that changed
-      const changedFields = findChangedFields(oldListing, newListing).filter(
-        (field) => !['age'].includes(field)
-      );
-
-      const actionType = !oldListing
-        ? ActionType.NOTIFY_NEW
-        : changedFields.length
-        ? ActionType.NOTIFY_CHANGED
-        : undefined;
-      if (!actionType) {
-        continue;
-      }
-
-      const action: Action = {
-        listingId: newListing.id,
-        type: actionType,
-        changed: getChanges(changedFields, oldListing, newListing),
-        screenshot: await element.screenshot(),
-        href: newListing.href,
-      };
-
-      cache.kv[newListing.id] = newListing;
-      actions.push(action);
-    }
-
-    return actions;
   }
 
   extractListings(pageHtml: string): KvListing[] {
