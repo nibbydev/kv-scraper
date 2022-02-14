@@ -1,7 +1,7 @@
 import nodemailer from 'nodemailer';
 import { Action, ActionType } from '../model/action.model';
+import { ListingLookup } from '../model/config.model';
 import { config } from '../server';
-import { findChangedFields } from '../utils';
 
 export class Notifier {
   transporter;
@@ -16,22 +16,22 @@ export class Notifier {
     });
   }
 
-  send(action: Action) {
+  send(lookup: ListingLookup, action: Action) {
     const subject =
       action.type === ActionType.NOTIFY_CHANGED
-        ? `KV scraper - Changed - ${action.newListing.id}`
-        : `KV scraper - New - ${action.newListing.id}`;
+        ? `Scraper - Changed - ${action.listingId}`
+        : `Scraper - New - ${action.listingId}`;
 
     const mailOptions = {
       from: config.signIn.username,
-      to: action.notifyEmails,
+      to: lookup.notifyEmails,
       subject: subject,
       html: this.buildHtml(action),
       attachments: [
         {
           filename: 'screenshot.png',
           content: action.screenshot,
-          cid: 'unique',
+          cid: '1',
         },
       ],
     };
@@ -49,17 +49,20 @@ export class Notifier {
     let changedFieldsHtml = '';
 
     if (action.type === ActionType.NOTIFY_CHANGED) {
-      const changedFields = findChangedFields(
-        action.newListing,
-        action.oldListing
-      );
-      changedFieldsHtml += '<h2>Changed fields:</h2>';
-      changedFieldsHtml += '<pre>' + changedFields.join(', ') + '</pre>';
+      changedFieldsHtml += '<h2>Changed fields:</h2>\n';
+      changedFieldsHtml += '<pre>\n';
+
+      for (const change of action.changed) {
+        changedFieldsHtml +=
+          change.field + ': ' + change.from + ' -> ' + change.to + '\n';
+      }
+
+      changedFieldsHtml += '</pre>\n';
     }
 
     return `
-      <a href="${action.newListing.href}" target="_blank">
-        <img src="cid:unique"/> 
+      <a href="${action.href}" target="_blank">
+        <img src="cid:1"/> 
         <br><br>
       </a>
       ${changedFieldsHtml}`.trim();

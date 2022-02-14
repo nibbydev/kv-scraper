@@ -1,14 +1,18 @@
-import { Listing } from './cheerio.model';
-
 export interface Action {
   type: ActionType;
-  oldListing: Listing;
-  newListing: Listing;
+  listingId: number;
+  changed: Change[];
   screenshot: Buffer;
-  notifyEmails: string[];
+  href: string;
 }
 
 export enum ActionType {
   NOTIFY_NEW = 'notify-new',
   NOTIFY_CHANGED = 'notify-changed',
+}
+
+export interface Change {
+  field: string;
+  from: string;
+  to: string;
 }

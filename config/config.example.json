@@ -4,6 +4,11 @@
       "url": "https://www.kv.ee/?act=search.simple&county=1&parish=1061&search_id=83889866&deal_type=1&search_type=new&price_max=170000&area_min=50&year_built_min=2005&agent_interval_send=1+day&raise_obj=3405810&e_ref=fc58659f3c3cf3bd4348984af630e17d&object_type=1&price_type=1&date_from=1644052396",
       "description": "Apartments in Tallinn",
       "notifyEmails": ["my.email@gmail.com"]
+    },
+    {
+      "url": "https://www.okidoki.ee/buy/361212/?fsort=2",
+      "description": "Kitties",
+      "notifyEmails":["my.email@gmail.com"]
     }
   ],
   "frequency": {

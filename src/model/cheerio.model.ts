@@ -1,4 +1,13 @@
-export interface Listing {
+export interface Cache {
+  kv: {
+    [listingId: number]: KvListing;
+  };
+  okidoki: {
+    [listingId: number]: OkidokiListing;
+  };
+}
+
+export interface KvListing {
   id: number;
   title: string;
   href: string;
@@ -11,6 +20,11 @@ export interface Listing {
   isBooked: boolean;
 }
 
-export interface Cache {
-  [listingId: number]: Listing;
+export interface OkidokiListing {
+  id: number;
+  title: string;
+  href: string;
+  age?: string;
+  price: string;
+  location: string;
 }
