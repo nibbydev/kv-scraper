@@ -12,6 +12,7 @@
   },
   "devDependencies": {
     "@types/lodash-es": "^4.17.4",
+    "@types/nodemailer": "^6.4.4",
     "@types/node": "^12.20.8",
     "node-dev": "6.4.0",
     "rxjs": "^7.1.0",

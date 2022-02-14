@@ -1,13 +1,14 @@
-import nodemailer from 'nodemailer';
+import { createTransport, Transporter } from 'nodemailer';
+import Mail from 'nodemailer/lib/mailer';
 import { Action, ActionType } from '../model/action.model';
 import { ListingLookup } from '../model/config.model';
 import { config } from '../server';
 
 export class Notifier {
-  transporter;
+  private transporter: Transporter;
 
   constructor() {
-    this.transporter = nodemailer.createTransport({
+    this.transporter = createTransport({
       service: config.signIn.service,
       auth: {
         user: config.signIn.username,
@@ -22,7 +23,7 @@ export class Notifier {
         ? `Scraper - Changed - ${action.listingId}`
         : `Scraper - New - ${action.listingId}`;
 
-    const mailOptions = {
+    const mailOptions: Mail.Options = {
       from: config.signIn.username,
       to: lookup.notifyEmails,
       subject: subject,
@@ -45,7 +46,7 @@ export class Notifier {
     });
   }
 
-  buildHtml(action: Action) {
+  private buildHtml(action: Action) {
     let changedFieldsHtml = '';
 
     if (action.type === ActionType.NOTIFY_CHANGED) {
