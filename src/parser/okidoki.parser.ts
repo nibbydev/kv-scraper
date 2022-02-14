@@ -8,6 +8,10 @@ export class OkidokiParser extends Parser {
   async afterLoad() {
     // hide cookie popup
     await this.page.click('#cookiepolicy .button');
+    // wait for pictures to load on page
+    await new Promise((resolve) =>
+      setTimeout(resolve, this.lookup.waitAfterPageLoad)
+    );
   }
 
   async parse(cache: Cache, listings: OkidokiListing[]) {
@@ -39,7 +43,7 @@ export class OkidokiParser extends Parser {
         type: actionType,
         changed: getChanges(changedFields, oldListing, newListing),
         screenshot: await element.screenshot(),
-        href: newListing.href
+        href: newListing.href,
       };
 
       cache.okidoki[newListing.id] = newListing;

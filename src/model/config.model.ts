@@ -17,6 +17,7 @@ export interface ListingLookup {
   url: string;
   description: string;
   notifyEmails: string[];
+  waitAfterPageLoad: number;
 }
 
 export interface SignInInfo {
